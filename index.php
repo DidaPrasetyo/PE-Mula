@@ -4,24 +4,37 @@ include('config.php');
 
 session_start();
 if (isset($_SESSION['login'])) {
-    header('location:dashboard.php');
+    echo "<script> location.replace('dashboard.php'); </script>";
 }
 if (isset($_POST['login'])) {
 
-    $username = $_POST['username'];
-    $password = md5($_POST['password']);
+    $username = mysqli_real_escape_string($koneksi,$_POST['username']);
+    $password = mysqli_real_escape_string($koneksi,$_POST['password']);
     
-    $sql = mysqli_query($koneksi, "SELECT * from user WHERE username ='$username' AND password ='$password'");
+    $sql = mysqli_query($koneksi, "SELECT * from user WHERE username ='$username'");
     $cek = mysqli_num_rows($sql);
 
     if ($cek > 0) {
         $data = mysqli_fetch_assoc($sql);
-        $_SESSION['username'] = $username;
-        $_SESSION['level'] = $level;
-        $_SESSION['login'] = 'login';
-        header('location:dashboard.php');
+        $dbid = $data['id'];
+        $dbpassword = $data['password'];
+        $dblevel = $data['level'];
+        $verify = password_verify($password, $dbpassword);
+        
+        if ($verify == 1) {
+            $sql = mysqli_query($koneksi, "SELECT * from info_user WHERE id_user ='$dbid'");
+            $data = mysqli_fetch_assoc($sql);
+            $_SESSION['id'] = $dbid;
+            $_SESSION['nama'] = $data['nama'];
+            $_SESSION['level'] = $dblevel;
+            $_SESSION['login'] = 'login';
+            header('location:dashboard.php');
+        } else {
+            header('location:login.php?gagal=1');   
+        }
+
     } else {
-        header('location:index.php?gagal=1');
+        header('location:login.php?gagal=1');
     }
     return;
 }
