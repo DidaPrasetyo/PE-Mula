@@ -9,6 +9,26 @@ $data = mysqli_query($koneksi, $query);
 $data_kandang = mysqli_fetch_assoc($data);
 mysqli_next_result($koneksi);
 
+$query = "SELECT * FROM keb_udara";
+$data_ventilasi = mysqli_query($koneksi, $query);
+mysqli_next_result($koneksi);
+
+$query = "SELECT * FROM produk WHERE id_kategori = 1 AND EXISTS (SELECT * FROM produk_fan WHERE produk.id = produk_fan.id_produk)";
+$data_fan = mysqli_query($koneksi, $query);
+mysqli_next_result($koneksi);
+
+$query = "SELECT * FROM produk WHERE id_kategori = 2";
+$data_cpad = mysqli_query($koneksi, $query);
+mysqli_next_result($koneksi);
+
+$query = "SELECT * FROM produk WHERE id_kategori = 7";
+$data_controller = mysqli_query($koneksi, $query);
+mysqli_next_result($koneksi);
+
+$query = "SELECT * FROM detil_pesanan INNER JOIN produk ON detil_pesanan.id_produk = produk.id WHERE id_pesanan = ".$_GET['id'];
+$db_produk = mysqli_query($koneksi, $query);
+mysqli_next_result($koneksi);
+
 if (isset($_POST['submit'])) {
   $alamat = $_POST['alamat'];
   $no_telp = $_POST['no_telp'];
@@ -41,10 +61,10 @@ if (isset($_POST['submit'])) {
     $controller = $_POST['controller'];
 
     $id_produk = array( $fan, $cooling_pad, $controller );
+    $sql = "DELETE FROM detil_pesanan where id_pesanan = ".$_GET['id'];
+    mysqli_query($koneksi, $sql);
     foreach ($id_produk as $row) {
-      $sql = "UPDATE detil_pesanan SET 
-      id_produk = '".$row."'
-      WHERE id = '".$_GET['id']."'";
+      $sql = "INSERT INTO detil_pesanan (id_pesanan, id_produk) VALUES ('".$_GET['id']."','".$row."')";
       mysqli_query($koneksi, $sql);
     }
     echo "<script> location.replace('kalkulasi.php?id=".$_GET['id']."'); </script>";
@@ -54,21 +74,7 @@ if (isset($_POST['submit'])) {
 }
 
 // GET DATA SELECT
-$query = "SELECT * FROM keb_udara";
-$data_ventilasi = mysqli_query($koneksi, $query);
-mysqli_next_result($koneksi);
 
-$query = "SELECT * FROM produk WHERE id_kategori = 1 AND EXISTS (SELECT * FROM produk_fan WHERE produk.id = produk_fan.id_produk)";
-$data_fan = mysqli_query($koneksi, $query);
-mysqli_next_result($koneksi);
-
-$query = "SELECT * FROM produk WHERE id_kategori = 2";
-$data_cpad = mysqli_query($koneksi, $query);
-mysqli_next_result($koneksi);
-
-$query = "SELECT * FROM produk WHERE id_kategori = 7";
-$data_controller = mysqli_query($koneksi, $query);
-mysqli_next_result($koneksi);
 
 //GET DATA YANG ADA DI DB
 // $query = "SELECT * FROM keb_udara WHERE id = ".$data_kandang['id_keb_udara'];
@@ -77,9 +83,7 @@ mysqli_next_result($koneksi);
 // var_dump($data_kandang['nilai']);
 // var_dump(mysqli_fetch_assoc($db_ventilasi));
 
-$query = "SELECT * FROM detil_pesanan INNER JOIN produk ON detil_pesanan.id_produk = produk.id WHERE id_pesanan = ".$_GET['id'];
-$db_produk = mysqli_query($koneksi, $query);
-mysqli_next_result($koneksi);
+
 // while($row = mysqli_fetch_assoc($db_produk)){
 //   echo $row['id_kategori'];
 // }
@@ -487,10 +491,12 @@ $data_db_fan = mysqli_fetch_assoc($db_fan)['m3/h'];
       if (by == 1) {
         var kebUd = (p*l*tp*tb) * nilai;
         var fan = (kebUd / cap) + 1;
+        alert(kebUd/cap);
       } else if (by == 2) {
         var penampang = l * t;
         var cap_total = penampang * 3.2 * 3600;
         var fan = cap_total / cap;
+        alert(penampang);
       }
         var hasil_fan = Math.ceil(fan);
 
